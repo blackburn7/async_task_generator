@@ -11,7 +11,7 @@ void MessageSerialization::encode( const Message &msg, std::string &encoded_msg 
   encoded_msg = "";
 
   // begins with message type command
-  encoded_msg += messageTypetoString(msg.get_message_type());
+  encoded_msg += messageTypeToString(msg.get_message_type());
 
   // traverse through arguments and appends
   for (unsigned int i = 0; i < msg.get_num_args(); i++) {
