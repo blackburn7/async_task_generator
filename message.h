@@ -62,6 +62,14 @@ public:
 
   unsigned get_num_args() const { return m_args.size(); }
   std::string get_arg( unsigned i ) const { return m_args.at( i ); }
+
+  bool valid_number_of_args() const;
 };
+
+bool identifier_is_valid(const std::string& identifier);
+
+bool value_is_valid(const std::string& value);
+
+bool quoted_text_is_valid(const std::string& quoted_text);
 
 #endif // MESSAGE_H
