@@ -18,7 +18,6 @@ void MessageSerialization::encode( const Message &msg, std::string &encoded_msg 
     encoded_msg += " ";
     encoded_msg += msg.get_arg(i);
   }
-  
   // terminates message with new line char
   encoded_msg += "\n";
 
@@ -30,6 +29,7 @@ void MessageSerialization::encode( const Message &msg, std::string &encoded_msg 
 
 void MessageSerialization::decode( const std::string &encoded_msg_, Message &msg )
 {   
+  
   // exceeds max message length check
   if (encoded_msg_.length() > msg.MAX_ENCODED_LEN) {
     throw InvalidMessage("Message length exceeds max length");
