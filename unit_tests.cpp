@@ -275,9 +275,13 @@ void test_message_get_key( TestObjs *objs )
 void test_message_is_valid( TestObjs *objs )
 {
   ASSERT( objs->login_req.is_valid() );
+
   ASSERT( objs->create_req.is_valid() );
+
   ASSERT( objs->push_req.is_valid() );
+
   ASSERT( objs->pop_req.is_valid() );
+
   ASSERT( objs->set_req.is_valid() );
   ASSERT( objs->get_req.is_valid() );
   ASSERT( objs->add_req.is_valid() );
@@ -291,7 +295,6 @@ void test_message_is_valid( TestObjs *objs )
   ASSERT( objs->data_resp.is_valid() );
   ASSERT( objs->long_get_req.is_valid() );
   ASSERT( objs->create_req_2.is_valid() );
-
   ASSERT( !objs->invalid_login_req.is_valid() );
   ASSERT( !objs->invalid_create_req.is_valid() );
   ASSERT( !objs->invalid_data_resp.is_valid() );
