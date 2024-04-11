@@ -4,6 +4,7 @@
 #include <map>
 #include "exceptions.h"
 #include "message_serialization.h"
+#include <iostream>
 
 void MessageSerialization::encode( const Message &msg, std::string &encoded_msg )
 {
@@ -46,7 +47,6 @@ void MessageSerialization::decode( const std::string &encoded_msg_, Message &msg
     messageType += encoded_msg_.at(i);
     i++;
   }
-
   // determines enum message type and maps to it
   msg.set_message_type(stringToMessageType(messageType));
 
@@ -71,6 +71,7 @@ void MessageSerialization::decode( const std::string &encoded_msg_, Message &msg
 
   // confirm validity
   if (!msg.is_valid()) {
+
     throw InvalidMessage("Message not valid");
   }
 }

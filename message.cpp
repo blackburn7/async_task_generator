@@ -166,7 +166,7 @@ bool identifier_is_valid(const std::string& identifier) {
   if (identifier.length() < 1 || !((identifier.at(0) >= 64 && identifier.at(0) <= 90) || (identifier.at(0) >= 97 && identifier.at(0) <= 122))) {
     return false;
   }
-  // check that each subsequent character is either a letter or underscore
+  // check that each subsequent character is either a letter or underscore or digit
   for (int i = 1; i < (int)identifier.length(); i++) {
     char character = identifier.at(i);
     if (!((character >= 64 && character <= 90) || (character >= 97 && character <= 122) || character == 95 || (character >= 48 && character <= 57))) {
