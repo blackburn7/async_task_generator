@@ -41,6 +41,12 @@ void MessageSerialization::decode( const std::string &encoded_msg_, Message &msg
   }
 
   unsigned int i = 0;
+
+  // clears spaces infront
+  while (encoded_msg_.at(i) == ' ') {
+    i++;
+  }
+
   std::string messageType = "";
   // extracts message type in string format
   while (encoded_msg_.at(i) != ' ' && encoded_msg_.at(i) != '\n') {
@@ -58,12 +64,34 @@ void MessageSerialization::decode( const std::string &encoded_msg_, Message &msg
     // create temp arg string holder
     std::string arg = "";
 
-    while (encoded_msg_.at(i) != '\n') {
-      if (encoded_msg_.at(i) != ' ') {
-        arg += encoded_msg_.at(i);
+    while (i < 1024) {
+      if (encoded_msg_.at(i) != ' ' && encoded_msg_.at(i) != '\n') {
+        if (encoded_msg_.at(i) == '\"') {
+          if (arg != "") {
+            msg.push_arg(arg);
+            arg = "";
+          }
+          i++;
+          while (i < 1024) {
+            if (encoded_msg_.at(i) == '\"') {
+              msg.push_arg(arg);
+              arg = "";
+              break;
+            }
+            arg += encoded_msg_.at(i);
+            i++;
+          }
+        } else {
+          arg += encoded_msg_.at(i);
+        }
       } else {
-        msg.push_arg(arg);
-        arg = "";
+        if (arg != "") {
+          msg.push_arg(arg);
+          arg = "";
+        }
+        if (encoded_msg_.at(i) == '\n') {
+          break;
+        }
       }
       i++;
     }
