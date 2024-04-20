@@ -5,20 +5,22 @@
 
 Table::Table(const std::string &name)
     : m_name(name),
-      theMap(),
-      tempMap(),
       inTransaction(false)
 {
-    // Initialize the mutex
-    if (pthread_mutex_init(&m_mutex, nullptr) != 0) {
+    //theMap = new std::map<std::string, std::string>();
+    //tempMap = new std::map<std::string, std::string>();
+    // Initialize the mutex y
+    /*if (pthread_mutex_init(&m_mutex, nullptr) != 0) {
         // Handle mutex initialization error
         throw std::runtime_error("Failed to initialize mutex");
-    } 
+    } */
+    // test
 }
 
 Table::~Table()
 {
-  // TODO: implement
+  //delete theMap;
+  //delete tempMap;
 }
 
 void Table::lock()
