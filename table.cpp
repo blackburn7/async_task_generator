@@ -3,11 +3,17 @@
 #include "exceptions.h"
 #include "guard.h"
 
-Table::Table( const std::string &name )
-  : m_name( name )
-  // TODO: initialize additional member variables
+Table::Table(const std::string &name)
+    : m_name(name),
+      theMap(),
+      tempMap(),
+      inTransaction(false)
 {
-  // TODO: implement
+    // Initialize the mutex
+    if (pthread_mutex_init(&m_mutex, nullptr) != 0) {
+        // Handle mutex initialization error
+        throw std::runtime_error("Failed to initialize mutex");
+    } 
 }
 
 Table::~Table()
@@ -28,21 +34,33 @@ void Table::unlock()
 bool Table::trylock()
 {
   // TODO: implement
+  return true;
 }
 
 void Table::set( const std::string &key, const std::string &value )
 {
-  // TODO: implement
+  /*theMap[key] = value;  */
 }
 
 std::string Table::get( const std::string &key )
 {
-  // TODO: implement
+  /*
+  if (has_key(key)) {
+    return map[key];
+  } */
+  //return theMap[key];
+  return "y";
 }
 
 bool Table::has_key( const std::string &key )
 {
-  // TODO: implement
+  /*
+  auto doesKeyExist = map.find(key);
+  if (doesKeyExist == map.end()) {
+    return false;
+  } 
+  */
+  return true;
 }
 
 void Table::commit_changes()

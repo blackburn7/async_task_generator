@@ -351,35 +351,41 @@ void test_message_serialization_decode( TestObjs *objs )
   ASSERT( 1 == msg.get_num_args() );
   ASSERT( "alice" == msg.get_username() );
 
-  MessageSerialization::decode( objs->encoded_create_req, msg );
-  ASSERT( MessageType::CREATE == msg.get_message_type() );
-  ASSERT( 1 == msg.get_num_args() );
-  ASSERT( "invoices" == msg.get_table() );
+  Message msg1;
+  MessageSerialization::decode( objs->encoded_create_req, msg1 );
+  ASSERT( MessageType::CREATE == msg1.get_message_type() );
+  ASSERT( 1 == msg1.get_num_args() );
+  ASSERT( "invoices" == msg1.get_table() );
 
-  MessageSerialization::decode( objs->encoded_data_resp, msg );
-  ASSERT( MessageType::DATA == msg.get_message_type() );
-  ASSERT( 1 == msg.get_num_args() );
-  ASSERT( "90125" == msg.get_value() );
+  Message msg2;
+  MessageSerialization::decode( objs->encoded_data_resp, msg2 );
+  ASSERT( MessageType::DATA == msg2.get_message_type() );
+  ASSERT( 1 == msg2.get_num_args() );
+  ASSERT( "90125" == msg2.get_value() );
 
-  MessageSerialization::decode( objs->encoded_get_req, msg );
-  ASSERT( MessageType::GET == msg.get_message_type() );
-  ASSERT( 2 == msg.get_num_args() );
-  ASSERT( "lineitems" == msg.get_table() );
-  ASSERT( "foobar" == msg.get_key() );
+  Message msg3;
+  MessageSerialization::decode( objs->encoded_get_req, msg3 );
+  ASSERT( MessageType::GET == msg3.get_message_type() );
+  ASSERT( 2 == msg3.get_num_args() );
+  ASSERT( "lineitems" == msg3.get_table() );
+  ASSERT( "foobar" == msg3.get_key() );
 
-  MessageSerialization::decode( objs->encoded_failed_resp, msg );
-  ASSERT( MessageType::FAILED == msg.get_message_type() );
-  ASSERT( 1 == msg.get_num_args() );
-  ASSERT( "Something went wrong, shucks!" == msg.get_quoted_text() );
+  Message msg4;
+  MessageSerialization::decode( objs->encoded_failed_resp, msg4 );
+  ASSERT( MessageType::FAILED == msg4.get_message_type() );
+  ASSERT( 1 == msg4.get_num_args() );
+  ASSERT( "Something went wrong, shucks!" == msg4.get_quoted_text() );
 
-  MessageSerialization::decode( objs->encoded_error_resp, msg );
-  ASSERT( MessageType::ERROR == msg.get_message_type() );
-  ASSERT( 1 == msg.get_num_args() );
-  ASSERT( "Wow, something really got messed up" == msg.get_quoted_text() );
+  Message msg5;
+  MessageSerialization::decode( objs->encoded_error_resp, msg5 );
+  ASSERT( MessageType::ERROR == msg5.get_message_type() );
+  ASSERT( 1 == msg5.get_num_args() );
+  ASSERT( "Wow, something really got messed up" == msg5.get_quoted_text() );
 
-  MessageSerialization::decode( objs->encoded_bye_req, msg );
-  ASSERT( MessageType::BYE == msg.get_message_type() );
-  ASSERT( 0 == msg.get_num_args() );
+  Message msg6;
+  MessageSerialization::decode( objs->encoded_bye_req, msg6 );
+  ASSERT( MessageType::BYE == msg6.get_message_type() );
+  ASSERT( 0 == msg6.get_num_args() );
 }
 
 void test_message_serialization_decode_invalid( TestObjs *objs )
