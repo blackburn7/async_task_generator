@@ -11,7 +11,7 @@ private:
   std::map<std::string, std::string>* theMap = new std::map<std::string, std::string>(); 
   std::map<std::string, std::string>* tempMap = new std::map<std::string, std::string>();
   bool inTransaction; 
-  //pthread_mutex_t m_mutex;
+  pthread_mutex_t m_mutex;
 
   // copy constructor and assignment operator are prohibited
   Table( const Table & );

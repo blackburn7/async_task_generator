@@ -7,13 +7,13 @@ Table::Table(const std::string &name)
     : m_name(name),
       inTransaction(false)
 {
-    //theMap = new std::map<std::string, std::string>();
-    //tempMap = new std::map<std::string, std::string>();
+    theMap = new std::map<std::string, std::string>();
+    tempMap = new std::map<std::string, std::string>();
     // Initialize the mutex y
-    /*if (pthread_mutex_init(&m_mutex, nullptr) != 0) {
+    if (pthread_mutex_init(&m_mutex, nullptr) != 0) {
         // Handle mutex initialization error
         throw std::runtime_error("Failed to initialize mutex");
-    } */
+    } 
     // test
 }
 
