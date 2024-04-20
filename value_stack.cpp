@@ -28,7 +28,7 @@ void ValueStack::push( const std::string &value )
 std::string ValueStack::get_top() const
 {
   if (total == 0) {
-    throw std::runtime_error("Stack is empty");
+    throw OperationException("Stack is empty");
   }
   return stk.top();
 }
@@ -36,7 +36,7 @@ std::string ValueStack::get_top() const
 void ValueStack::pop()
 {
   if (total == 0) {
-    throw std::runtime_error("Stack is empty");
+    throw OperationException("Stack is empty");
   }
   stk.pop();
   total--;
