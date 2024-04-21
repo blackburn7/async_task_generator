@@ -1,3 +1,13 @@
+/*
+Assignment 5
+
+Atticus Colwell
+acolwel2@jh.edu
+
+Matthew Blackburn
+mblackb8@jh.edu
+*/
+
 #ifndef TABLE_H
 #define TABLE_H
 
@@ -7,9 +17,16 @@
 
 class Table {
 private:
+  // name of table
   std::string m_name;
+
+  // base map with all committed changes
   std::map<std::string, std::string>* theMap = new std::map<std::string, std::string>(); 
+
+  // temporary map with uncomitted changes
   std::map<std::string, std::string>* tempMap = new std::map<std::string, std::string>();
+
+  // mutex
   pthread_mutex_t m_mutex;
 
   // copy constructor and assignment operator are prohibited

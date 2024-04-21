@@ -1,3 +1,13 @@
+/*
+Assignment 5
+
+Atticus Colwell
+acolwel2@jh.edu
+
+Matthew Blackburn
+mblackb8@jh.edu
+*/
+
 #include <utility>
 #include <sstream>
 #include <cassert>
@@ -30,6 +40,7 @@ void MessageSerialization::encode( const Message &msg, std::string &encoded_msg 
 
 void MessageSerialization::decode( const std::string &encoded_msg_, Message &msg )
 {   
+  msg.resetMsg();
   // exceeds max message length check
   if (encoded_msg_.length() > msg.MAX_ENCODED_LEN) {
     throw InvalidMessage("Message length exceeds max length");
@@ -73,7 +84,8 @@ void MessageSerialization::decode( const std::string &encoded_msg_, Message &msg
           }
           i++;
           while (i < 1024) {
-            if (encoded_msg_.at(i) == '\"') {
+            // ensure under 1024 max length
+            if (encoded_msg_.at(i) == '\"') { // end
               msg.push_arg(arg);
               arg = "";
               break;
@@ -86,6 +98,7 @@ void MessageSerialization::decode( const std::string &encoded_msg_, Message &msg
         }
       } else {
         if (arg != "") {
+          // push arg to message
           msg.push_arg(arg);
           arg = "";
         }

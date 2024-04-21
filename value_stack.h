@@ -1,3 +1,13 @@
+/*
+Assignment 5
+
+Atticus Colwell
+acolwel2@jh.edu
+
+Matthew Blackburn
+mblackb8@jh.edu
+*/
+
 #ifndef VALUE_STACK_H
 #define VALUE_STACK_H
 
@@ -7,7 +17,10 @@
 
 class ValueStack {
 private:
+  // stack to hold values
   std::stack<std::string> stk;
+
+  // total number of values present in stack
   int total = 0;
 
 public:

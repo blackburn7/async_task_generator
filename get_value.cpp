@@ -1,3 +1,13 @@
+/*
+Assignment 5
+
+Atticus Colwell
+acolwel2@jh.edu
+
+Matthew Blackburn
+mblackb8@jh.edu
+*/
+
 #include <iostream>
 #include <string>
 #include <cstdlib>
@@ -10,7 +20,7 @@ using namespace std;
 
 int main(int argc, char **argv) {
     if (argc != 6) {
-        cerr << "Usage: ./get_value <hostname> <port> <username> <table> <key>\n";
+        cerr << "Requires this format: ./get_value <hostname> <port> <username> <table> <key>\n";
         return 1;
     }
 
@@ -25,7 +35,7 @@ int main(int argc, char **argv) {
         rio_t rio;
         rio_readinitb(&rio, clientfd);
 
-        // Send LOGIN request
+        // send LOGIN request
         Message loginReq(MessageType::LOGIN, {username});
         string loginMsg;
         MessageSerialization::encode(loginReq, loginMsg);
@@ -44,20 +54,23 @@ int main(int argc, char **argv) {
             std::cerr << "Error: " + loginResp.get_quoted_text();
         }
 
-        // Send GET request
+        // send GET request
         Message getReq(MessageType::GET, {table, key});
         string getMsg;
         MessageSerialization::encode(getReq, getMsg);
         rio_writen(clientfd, getMsg.c_str(), getMsg.length());
 
-        // Receive GET response
+        // receive GET response
         n = rio_readlineb(&rio, buf, sizeof(buf));
         if (n < 0) {
+            // no read occured/failed
             std::cerr << "Failed to read response";
         }
         buf[n] = '\0';
         Message getResp;
         MessageSerialization::decode(string(buf), getResp);
+
+        // Checks for if message return is OK or a failed/error
         if (getResp.get_message_type() != MessageType::OK) {
             std::cerr << "Error: " + getResp.get_quoted_text();
             return 1;
@@ -72,12 +85,18 @@ int main(int argc, char **argv) {
         // Receive TOP response
         n = rio_readlineb(&rio, buf, sizeof(buf));
         if (n < 0) {
+            // failed to read
             std::cerr << "Failed to read response";
             return 1;
         }
+
+        // creates a buf
         buf[n] = '\0';
+
         Message topResp;
         MessageSerialization::decode(string(buf), topResp);
+
+        // ensures return from top is of type Data
         if (topResp.get_message_type() != MessageType::DATA) {
             std::cerr << "Error: " + topResp.get_quoted_text();
             return 1;
@@ -90,24 +109,34 @@ int main(int argc, char **argv) {
         Message byeReq(MessageType::BYE, {});
         string byeMsg;
         MessageSerialization::encode(byeReq, byeMsg);
+
+        // writes bye
         rio_writen(clientfd, byeMsg.c_str(), byeMsg.length());
 
         // Receive BYE response
         n = rio_readlineb(&rio, buf, sizeof(buf));
         if (n < 0) {
+            // fail to read
             std::cerr << "Error: Failed to read response";
             return 1;
         }
+
         buf[n] = '\0';
+
         Message byeResp;
         MessageSerialization::decode(string(buf), byeResp);
+
+        // ensure reponse is OK
         if (byeResp.get_message_type() != MessageType::OK) {
             std::cerr << "Error: " + byeResp.get_quoted_text();
             return 1;
         }
-
+        
+        // close
         close(clientfd);
+
     } catch (std::exception &e) {
+      // handle any exceptions
       std::cerr << "Error: " << e.what() << "\n";
       return 1;
     }

@@ -1,3 +1,13 @@
+/*
+Assignment 5
+
+Atticus Colwell
+acolwel2@jh.edu
+
+Matthew Blackburn
+mblackb8@jh.edu
+*/
+
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
@@ -33,7 +43,10 @@ enum class MessageType {
 
 class Message {
 private:
+  // message type
   MessageType m_message_type;
+
+  // number of args
   std::vector<std::string> m_args;
 
 public:
@@ -64,12 +77,26 @@ public:
   std::string get_arg( unsigned i ) const { return m_args.at( i ); }
 
   bool valid_number_of_args() const;
+
+  /**
+  * resets everything in the message object to its base format (basically when constructed)
+  */
+  void resetMsg();
 };
 
+/**
+  * Is identifier valid check
+  */
 bool identifier_is_valid(const std::string& identifier);
 
+/**
+  * checks to see if value is valid
+  */
 bool value_is_valid(const std::string& value);
 
+/**
+  * checks to see if quoted text is valid format
+  */
 bool quoted_text_is_valid(const std::string& quoted_text);
 
 #endif // MESSAGE_H
