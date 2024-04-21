@@ -4,6 +4,7 @@
 #include "csapp.h"
 #include "message.h"
 #include "message_serialization.h"
+#include "exceptions.h"
 
 using namespace std;
 
@@ -101,10 +102,30 @@ int main(int argc, char **argv) {
         }
 
         close(clientfd);
-        return 0;
     }
-    catch (exception &e) {
-        cerr << "Error: " << e.what() << "\n";
-        return 1;
+    catch (InvalidMessage& e) {
+        std::cerr << "ERROR\n";
+        std::cerr << "Error: " << e.what() << "\n";
+        // Handle InvalidMessage error (session should end)
+        // Close connection here if necessary
+    } catch (CommException& e) {
+        std::cerr << "ERROR\n";
+        std::cerr << "Error: " << e.what() << "\n";
+        // Handle CommException error (session should end)
+        // Close connection here if necessary
+    } catch (OperationException& e) {
+        std::cerr << "FAILED\n";
+        std::cerr << "Error: " << e.what() << "\n";
+        // Handle OperationException error (session can continue)
+    } catch (FailedTransaction& e) {
+        std::cerr << "FAILED\n";
+        std::cerr << "Error: " << e.what() << "\n";
+        // Handle FailedTransaction error (session can continue)
+    } catch (std::exception& e) {
+        std::cerr << "ERROR\n";
+        std::cerr << "Error: " << e.what() << "\n";
+        // Handle other generic exceptions (session should end)
+        // Close connection here if necessary
     }
+    return 0;
 }
