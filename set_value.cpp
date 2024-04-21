@@ -41,7 +41,7 @@ int main(int argc, char **argv)
     Message loginResp;
     MessageSerialization::decode(std::string(buf), loginResp);
     if (loginResp.get_message_type() != MessageType::OK) {
-        std::cerr << "Error: Failed to log in";
+        std::cerr << "Error: " + loginResp.get_quoted_text();
         return 1;
     }
 
@@ -54,14 +54,14 @@ int main(int argc, char **argv)
     // Receive PUSH response
     n = rio_readlineb(&rio, buf, sizeof(buf));
     if (n < 0) {
-        std::cerr << "Error: Failed to read response";
+        std::cerr << "Error: " + loginResp.get_quoted_text();
         return 1;
     }
     buf[n] = '\0';
     Message pushResp;
     MessageSerialization::decode(std::string(buf), pushResp);
     if (pushResp.get_message_type() != MessageType::OK) {
-        std::cerr << "Error: Failed to push value";
+        std::cerr << "Error: " + pushResp.get_quoted_text();
         return 1;
     }
 
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     Message setResp;
     MessageSerialization::decode(std::string(buf), setResp);
     if (setResp.get_message_type() != MessageType::OK) {
-        std::cerr << "Error: Failed to set value";
+        std::cerr << "Error: " + setResp.get_quoted_text();
         return 1;
     }
 
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
     Message byeResp;
     MessageSerialization::decode(std::string(buf), byeResp);
     if (byeResp.get_message_type() != MessageType::OK) {
-        std::cerr << "Error: Failed to end connection";
+        std::cerr << "Error: " + byeResp.get_quoted_text();
         return 1;
     }
 
