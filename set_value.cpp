@@ -34,13 +34,15 @@ int main(int argc, char **argv)
     char buf[Message::MAX_ENCODED_LEN + 1];
     ssize_t n = rio_readlineb(&rio, buf, sizeof(buf));
     if (n < 0) {
-        throw std::runtime_error("Error: Failed to read response");
+        std::cerr << "Error: Failed to read response";
+        return 1;
     }
     buf[n] = '\0';
     Message loginResp;
     MessageSerialization::decode(std::string(buf), loginResp);
     if (loginResp.get_message_type() != MessageType::OK) {
-        throw std::runtime_error("Error: Failed to log in");
+        std::cerr << "Error: Failed to log in";
+        return 1;
     }
 
     // Send PUSH request
@@ -52,13 +54,15 @@ int main(int argc, char **argv)
     // Receive PUSH response
     n = rio_readlineb(&rio, buf, sizeof(buf));
     if (n < 0) {
-        throw std::runtime_error("Error: Failed to read response");
+        std::cerr << "Error: Failed to read response";
+        return 1;
     }
     buf[n] = '\0';
     Message pushResp;
     MessageSerialization::decode(std::string(buf), pushResp);
     if (pushResp.get_message_type() != MessageType::OK) {
-        throw std::runtime_error("Error: Failed to push value");
+        std::cerr << "Error: Failed to push value";
+        return 1;
     }
 
     // Send SET request
@@ -70,13 +74,15 @@ int main(int argc, char **argv)
     // Receive SET response
     n = rio_readlineb(&rio, buf, sizeof(buf));
     if (n < 0) {
-        throw std::runtime_error("Error: Failed to read response");
+        std::cerr << "Error: Failed to read response";
+        return 1;
     }
     buf[n] = '\0';
     Message setResp;
     MessageSerialization::decode(std::string(buf), setResp);
     if (setResp.get_message_type() != MessageType::OK) {
-        throw std::runtime_error("Error: Failed to set value");
+        std::cerr << "Error: Failed to set value";
+        return 1;
     }
 
     // Send BYE request
@@ -88,13 +94,15 @@ int main(int argc, char **argv)
     // Receive BYE response
     n = rio_readlineb(&rio, buf, sizeof(buf));
     if (n < 0) {
-        throw std::runtime_error("Error: Failed to read response");
+        std::cerr << "Error: Failed to read response";
+        return 1;
     }
     buf[n] = '\0';
     Message byeResp;
     MessageSerialization::decode(std::string(buf), byeResp);
     if (byeResp.get_message_type() != MessageType::OK) {
-        throw std::runtime_error("Error: Failed to end connection");
+        std::cerr << "Error: Failed to end connection";
+        return 1;
     }
 
     close(clientfd);
