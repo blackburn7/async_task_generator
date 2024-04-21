@@ -1,178 +1,171 @@
 #include <iostream>
 #include <string>
-#include <cstdlib>
 #include "csapp.h"
 #include "message.h"
 #include "message_serialization.h"
 
-int main(int argc, char **argv) {
-  if ( argc != 6 && (argc != 7 || std::string(argv[1]) != "-t") ) {
-    std::cerr << "Usage: ./incr_value [-t] <hostname> <port> <username> <table> <key>\n";
-    std::cerr << "Options:\n";
-    std::cerr << "  -t      execute the increment as a transaction\n";
-    return 1;
-  }
+int main(int argc, char* argv[]) {
+    bool useTransaction = false;
+    int argIndex = 1;
 
-  int count = 1;
+    if (argc == 7 && std::string(argv[1]) == "-t") {
+        useTransaction = true;
+        argIndex = 2;
+    } else if (argc != 6) {
+        std::cerr << "Usage: ./incr_value [-t] hostname port username table key" << std::endl;
+        return 1;
+    }
 
-  bool use_transaction = false;
-  if ( argc == 7 ) {
-    use_transaction = true;
-    count = 2;
-  }
+    std::string hostname = argv[argIndex];
+    int port = std::stoi(argv[argIndex + 1]);
+    std::string username = argv[argIndex + 2];
+    std::string table = argv[argIndex + 3];
+    std::string key = argv[argIndex + 4];
 
-  std::string hostname = argv[count++];
-  std::string port = argv[count++];
-  std::string username = argv[count++];
-  std::string table = argv[count++];
-  std::string key = argv[count++];
+    int clientfd = Open_clientfd(hostname.c_str(), std::to_string(port).c_str());
 
-  try {
-    int clientfd = open_clientfd(hostname.c_str(), port.c_str());
     rio_t rio;
-    rio_readinitb(&rio, clientfd);
+    Rio_readinitb(&rio, clientfd);
 
-    // Send LOGIN request
-    Message loginReq(MessageType::LOGIN, {username});
-    std::string loginMsg;
-    MessageSerialization::encode(loginReq, loginMsg);
-    rio_writen(clientfd, loginMsg.c_str(), loginMsg.length());
+    Message loginMsg(MessageType::LOGIN, {username});
+    std::string serializedLoginMsg;
+    MessageSerialization::encode(loginMsg, serializedLoginMsg);
+    Rio_writen(clientfd, serializedLoginMsg.c_str(), serializedLoginMsg.length());
 
-    // Receive LOGIN response
-    char buf[Message::MAX_ENCODED_LEN + 1];
-    ssize_t n = rio_readlineb(&rio, buf, sizeof(buf));
-    if (n < 0) {
-        throw std::runtime_error("Failed to read response");
-    }
-    buf[n] = '\0';
-    Message loginResp;
-    MessageSerialization::decode(std::string(buf), loginResp);
-    if (loginResp.get_message_type() != MessageType::OK) {
-        throw std::runtime_error("Failed to log in");
+    Message response;
+    std::string responseStr;
+    Rio_readlineb(&rio, responseStr.data(), responseStr.max_size());
+
+    if (responseStr.empty()) {
+        std::cerr << "Error: Received an empty response from the server" << std::endl;
+        Close(clientfd);
+        return 1;
     }
 
-    // Send GET request
-    Message getReq(MessageType::GET, {table, key});
-    std::string getMsg;
-    MessageSerialization::encode(getReq, getMsg);
-    rio_writen(clientfd, getMsg.c_str(), getMsg.length());
+    MessageSerialization::decode(responseStr, response);
 
-    // Receive GET response
-    n = rio_readlineb(&rio, buf, sizeof(buf));
-    if (n < 0) {
-        throw std::runtime_error("Failed to read response");
-    }
-    buf[n] = '\0';
-    Message getResp;
-    MessageSerialization::decode(std::string(buf), getResp);
-    if (getResp.get_message_type() != MessageType::OK) {
-        throw std::runtime_error("Failed to get value");
+    if (response.get_message_type() != MessageType::OK) {
+        std::cerr << "Error: " << response.get_quoted_text() << std::endl;
+        Close(clientfd);
+        return 1;
     }
 
-    // Parse the value
-    int currentValue = std::stoi(getResp.get_value());
+    bool transactionSuccess = false;
+    while (!transactionSuccess) {
+        if (useTransaction) {
+            Message beginMsg(MessageType::BEGIN);
+            std::string serializedBeginMsg;
+            MessageSerialization::encode(beginMsg, serializedBeginMsg);
+            Rio_writen(clientfd, serializedBeginMsg.c_str(), serializedBeginMsg.length());
 
-    // Increment the value
-    int newValue = currentValue + 1;
+            responseStr.clear();
+            Rio_readlineb(&rio, responseStr.data(), responseStr.max_size());
 
-    // Send PUSH request
-    Message pushReq(MessageType::PUSH, {std::to_string(newValue)});
-    std::string pushMsg;
-    MessageSerialization::encode(pushReq, pushMsg);
-    rio_writen(clientfd, pushMsg.c_str(), pushMsg.length());
+            if (responseStr.empty()) {
+                continue;
+            }
 
-    // Receive PUSH response
-    n = rio_readlineb(&rio, buf, sizeof(buf));
-    if (n < 0) {
-        throw std::runtime_error("Failed to read response");
-    }
-    buf[n] = '\0';
-    Message pushResp;
-    MessageSerialization::decode(std::string(buf), pushResp);
-    if (pushResp.get_message_type() != MessageType::OK) {
-        throw std::runtime_error("Failed to push value");
-    }
+            MessageSerialization::decode(responseStr, response);
 
-    // If transaction requested, send BEGIN
-    if (use_transaction) {
-      Message beginReq(MessageType::BEGIN, {});
-      std::string beginMsg;
-      MessageSerialization::encode(beginReq, beginMsg);
-      rio_writen(clientfd, beginMsg.c_str(), beginMsg.length());
-
-      // Receive BEGIN response
-      n = rio_readlineb(&rio, buf, sizeof(buf));
-      if (n < 0) {
-        throw std::runtime_error("Failed to read response");
-      }
-      buf[n] = '\0';
-      Message beginResp;
-      MessageSerialization::decode(std::string(buf), beginResp);
-      if (beginResp.get_message_type() != MessageType::OK) {
-        throw std::runtime_error("Failed to begin transaction");
-      }
-    }
-
-    // Send SET request
-    Message setReq(MessageType::SET, {table, key});
-    std::string setMsg;
-    MessageSerialization::encode(setReq, setMsg);
-    rio_writen(clientfd, setMsg.c_str(), setMsg.length());
-
-    // Receive SET response
-    n = rio_readlineb(&rio, buf, sizeof(buf));
-    if (n < 0) {
-        throw std::runtime_error("Failed to read response");
-    }
-    buf[n] = '\0';
-    Message setResp;
-    MessageSerialization::decode(std::string(buf), setResp);
-    if (setResp.get_message_type() != MessageType::OK) {
-        throw std::runtime_error("Failed to set value");
-    }
-
-    // If transaction requested, send COMMIT
-    if (use_transaction) {
-        Message commitReq(MessageType::COMMIT, {});
-        std::string commitMsg;
-        MessageSerialization::encode(commitReq, commitMsg);
-        rio_writen(clientfd, commitMsg.c_str(), commitMsg.length());
-
-        // Receive COMMIT response
-        n = rio_readlineb(&rio, buf, sizeof(buf));
-        if (n < 0) {
-            throw std::runtime_error("Failed to read response");
+            if (response.get_message_type() != MessageType::OK) {
+                std::cerr << "Error: " << response.get_quoted_text() << std::endl;
+                Close(clientfd);
+                return 1;
+            }
         }
-        buf[n] = '\0';
-        Message commitResp;
-        MessageSerialization::decode(std::string(buf), commitResp);
-        if (commitResp.get_message_type() != MessageType::OK) {
-            throw std::runtime_error("Failed to commit transaction");
+
+        Message getMsg(MessageType::GET, {table, key});
+        std::string serializedGetMsg;
+        MessageSerialization::encode(getMsg, serializedGetMsg);
+        Rio_writen(clientfd, serializedGetMsg.c_str(), serializedGetMsg.length());
+
+        responseStr.clear();
+        Rio_readlineb(&rio, responseStr.data(), responseStr.max_size());
+
+        if (responseStr.empty()) {
+            if (useTransaction) {
+                continue;
+            } else {
+                std::cerr << "Error: Received an empty response from the server" << std::endl;
+                Close(clientfd);
+                return 1;
+            }
         }
+
+        MessageSerialization::decode(responseStr, response);
+
+        if (response.get_message_type() != MessageType::OK) {
+            if (useTransaction) {
+                continue;
+            } else {
+                std::cerr << "Error: " << response.get_quoted_text() << std::endl;
+                Close(clientfd);
+                return 1;
+            }
+        }
+
+        int value = std::stoi(response.get_value());
+        value++;
+        std::string incrementedValue = std::to_string(value);
+
+        Message setMsg(MessageType::SET, {table, key, incrementedValue});
+        std::string serializedSetMsg;
+        MessageSerialization::encode(setMsg, serializedSetMsg);
+        Rio_writen(clientfd, serializedSetMsg.c_str(), serializedSetMsg.length());
+
+        responseStr.clear();
+        Rio_readlineb(&rio, responseStr.data(), responseStr.max_size());
+
+        if (responseStr.empty()) {
+            if (useTransaction) {
+                continue;
+            } else {
+                std::cerr << "Error: Received an empty response from the server" << std::endl;
+                Close(clientfd);
+                return 1;
+            }
+        }
+
+        MessageSerialization::decode(responseStr, response);
+
+        if (response.get_message_type() != MessageType::OK) {
+            if (useTransaction) {
+                continue;
+            } else {
+                std::cerr << "Error: " << response.get_quoted_text() << std::endl;
+                Close(clientfd);
+                return 1;
+            }
+        }
+
+        if (useTransaction) {
+            Message commitMsg(MessageType::COMMIT);
+            std::string serializedCommitMsg;
+            MessageSerialization::encode(commitMsg, serializedCommitMsg);
+            Rio_writen(clientfd, serializedCommitMsg.c_str(), serializedCommitMsg.length());
+
+            responseStr.clear();
+            Rio_readlineb(&rio, responseStr.data(), responseStr.max_size());
+
+            if (responseStr.empty()) {
+                continue;
+            }
+
+            MessageSerialization::decode(responseStr, response);
+
+            if (response.get_message_type() != MessageType::OK) {
+                continue;
+            }
+        }
+
+        transactionSuccess = true;
     }
 
-    // Send BYE request
-    Message byeReq(MessageType::BYE, {});
-    std::string byeMsg;
-    MessageSerialization::encode(byeReq, byeMsg);
-    rio_writen(clientfd, byeMsg.c_str(), byeMsg.length());
+    Message byeMsg(MessageType::BYE);
+    std::string serializedByeMsg;
+    MessageSerialization::encode(byeMsg, serializedByeMsg);
+    Rio_writen(clientfd, serializedByeMsg.c_str(), serializedByeMsg.length());
 
-    // Receive BYE response
-    n = rio_readlineb(&rio, buf, sizeof(buf));
-    if (n < 0) {
-        throw std::runtime_error("Failed to read response");
-    }
-    buf[n] = '\0';
-    Message byeResp;
-    MessageSerialization::decode(std::string(buf), byeResp);
-    if (byeResp.get_message_type() != MessageType::OK) {
-        throw std::runtime_error("Failed to end connection");
-    }
-
-    close(clientfd);
+    Close(clientfd);
     return 0;
-} catch (std::exception &e) {
-    std::cerr << "Error: " << e.what() << "\n";
-    return 1;
-}
 }
