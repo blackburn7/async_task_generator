@@ -35,13 +35,13 @@ int main(int argc, char **argv) {
         char buf[Message::MAX_ENCODED_LEN + 1];
         ssize_t n = rio_readlineb(&rio, buf, sizeof(buf));
         if (n < 0) {
-            throw CommException("Failed to read response");
+            std::cerr << "Failed to read response";
         }
         buf[n] = '\0';
         Message loginResp;
         MessageSerialization::decode(string(buf), loginResp);
         if (loginResp.get_message_type() != MessageType::OK) {
-            throw OperationException("Failed to log in");
+            std::cerr << "Error: " + loginResp.get_quoted_text();
         }
 
         // Send GET request
@@ -53,13 +53,14 @@ int main(int argc, char **argv) {
         // Receive GET response
         n = rio_readlineb(&rio, buf, sizeof(buf));
         if (n < 0) {
-            throw CommException("Failed to read response");
+            std::cerr << "Failed to read response";
         }
         buf[n] = '\0';
         Message getResp;
         MessageSerialization::decode(string(buf), getResp);
         if (getResp.get_message_type() != MessageType::OK) {
-            throw OperationException("Failed to get value: " + getResp.get_value());
+            std::cerr << "Error: " + getResp.get_quoted_text();
+            return 1;
         }
 
         // Send TOP request
@@ -71,13 +72,15 @@ int main(int argc, char **argv) {
         // Receive TOP response
         n = rio_readlineb(&rio, buf, sizeof(buf));
         if (n < 0) {
-            throw CommException("Failed to read response");
+            std::cerr << "Failed to read response";
+            return 1;
         }
         buf[n] = '\0';
         Message topResp;
         MessageSerialization::decode(string(buf), topResp);
         if (topResp.get_message_type() != MessageType::DATA) {
-            throw OperationException("Failed to get top value");
+            std::cerr << "Error: " + topResp.get_quoted_text();
+            return 1;
         }
 
         // Print the retrieved value
@@ -92,31 +95,21 @@ int main(int argc, char **argv) {
         // Receive BYE response
         n = rio_readlineb(&rio, buf, sizeof(buf));
         if (n < 0) {
-            throw CommException("Failed to read response");
+            std::cerr << "Error: Failed to read response";
+            return 1;
         }
         buf[n] = '\0';
         Message byeResp;
         MessageSerialization::decode(string(buf), byeResp);
         if (byeResp.get_message_type() != MessageType::OK) {
-            throw OperationException("Failed to end connection");
+            std::cerr << "Error: " + byeResp.get_quoted_text();
+            return 1;
         }
 
         close(clientfd);
-    } catch (InvalidMessage& e) {
-        std::cerr << "Error: " << e.what() << "\n";
-        return 1;
-    } catch (CommException& e) {
-        std::cerr << "Error: " << e.what() << "\n";
-        return 1;
-    } catch (OperationException& e) {
-        std::cerr << "Error: " << e.what() << "\n";
-        return 1;
-    } catch (FailedTransaction& e) {
-        std::cerr << "Error: " << e.what() << "\n";
-        return 1;
-    } catch (std::exception& e) {
-        std::cerr << "Error: " << e.what() << "\n";
-        return 1;
+    } catch (std::exception &e) {
+      std::cerr << "Error: " << e.what() << "\n";
+      return 1;
     }
     return 0;
 }
