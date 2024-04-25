@@ -69,8 +69,6 @@ void *Server::client_worker( void *arg )
   client->chat_with_client();
 
   // clean up resources
-  close(client->m_client_fd);
-  free(client);
   return nullptr;
 }
 

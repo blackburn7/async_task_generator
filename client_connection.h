@@ -29,10 +29,17 @@ public:
   void chat_with_client();
 
   // request command handlers
-  void push_request_handler(Message &request);
-  void set_request_handler(Message &request);
-  void get_request_handler(Message &request);
-  void add_request_handler(Message &request);
+  Message push_request_handler(Message &request);
+  Message set_request_handler(Message &request);
+  Message get_request_handler(Message &request);
+  Message add_request_handler(Message &request);
+  Message mul_request_handler(Message &request);
+  Message sub_request_handler(Message &request);
+  Message div_request_handler(Message &request);
+
+
+  // extra helper functions
+  void top_two_vals_stack(int64_t &val1, int64_t &val2); 
   
 
   
