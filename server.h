@@ -9,7 +9,12 @@
 
 class Server {
 private:
-  // TODO: add member variables
+  // member variables
+  int ssock_fd;
+  int keep_going;
+  std::map <std::string, Table*> server_tables; 
+
+
 
   // copy constructor and assignment operator are prohibited
   Server( const Server & );
@@ -26,14 +31,14 @@ public:
 
   void log_error( const std::string &what );
 
-  // TODO: add member functions
+  void stop() {
+    keep_going = 0;
+  };
 
-  // Some suggested member functions:
-/*
   void create_table( const std::string &name );
+
   Table *find_table( const std::string &name );
-  void log_error( const std::string &what );
-*/
+
 };
 
 
