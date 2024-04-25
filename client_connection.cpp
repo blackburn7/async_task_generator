@@ -10,6 +10,7 @@
 ClientConnection::ClientConnection( Server *server, int client_fd )
   : m_server( server )
   , m_client_fd( client_fd )
+  , response(Message(MessageType::NONE))
 {
   rio_readinitb( &m_fdbuf, m_client_fd );
 }
@@ -25,34 +26,44 @@ void ClientConnection::chat_with_client() {
 
     // initialize client request and server response messages
     Message request;
-    Message response;
 
     // use client fd buffer to read in req into string
-    std::string encoded_message;
-    int ret = rio_readlineb(&m_fdbuf, &encoded_message, Message::MAX_ENCODED_LEN);
-
+    char buf[Message::MAX_ENCODED_LEN+1];
+    int ret = rio_readlineb(&m_fdbuf, buf, sizeof(buf));
     if (ret <= 0) {
+      std::cout << "error reading" << std::endl;
       // handle error reading in client request
     }
 
-    // decode message
+    // convert buf to string and decode
+    std::string encoded_message(buf);
     MessageSerialization::decode(encoded_message, request);
+
+    if (!request.is_valid()) {
+      response = Message(MessageType::ERROR, {"Error:invalid message sent"});
+      return_response_to_client(response);
+      return;
+    }
+
+
 
     if (request.get_message_type() == MessageType::LOGIN) {
       logged_in = true;
+      response = Message(MessageType::OK);
       continue;
     } else if (!logged_in) {
       // handle not logged in error
     }
+
     switch (request.get_message_type()) {
       case MessageType::CREATE:
         m_server->create_table(request.get_table());
+        response = Message(MessageType::OK);
         break;
       case MessageType::PUSH:
         client_stack.push(request.get_value());
         response = Message(MessageType::OK);
         break;
-
       case MessageType::POP:
         client_stack.pop();
         response = Message(MessageType::OK);
@@ -63,27 +74,27 @@ void ClientConnection::chat_with_client() {
         break;
       case MessageType::SET:
         // Handle SET request
-        response = set_request_handler(request);
+        set_request_handler(request);
         break;
       case MessageType::GET:
         // Handle GET request
-        response = get_request_handler(request);
+        get_request_handler(request);
         break;
       case MessageType::ADD:
         // handle ADD request
-        response = add_request_handler(request);
+        add_request_handler(request);
         break;
       case MessageType::MUL:
         // handle MUL request
-        response = mul_request_handler(request);
+        mul_request_handler(request);
         break;
       case MessageType::SUB:
         // handle SUB request
-        response = sub_request_handler(request);
+        sub_request_handler(request);
         break;
       case MessageType::DIV:
         // handle DIV request
-        response = div_request_handler(request);
+        div_request_handler(request);
         break;
       case MessageType::BEGIN:
         break;
@@ -96,13 +107,11 @@ void ClientConnection::chat_with_client() {
     }
 
     // encode and return  response
-    std::string encoded_response;
-    MessageSerialization::encode(response, encoded_message);
-    rio_writen(m_client_fd, encoded_response.c_str(), encoded_message.size());
+    return_response_to_client(response);
   }
 
-
-
+  std::cout << "here" << std::endl;
+  close(m_client_fd);
 
 }
 
@@ -117,7 +126,7 @@ Message ClientConnection::get_request_handler(Message &request) {
   // push value onto operand stack
   client_stack.push(cur_val);
 
-  return Message(MessageType::OK);
+  response = Message(MessageType::OK);
 }
 
 Message ClientConnection::set_request_handler(Message &request) {
@@ -132,7 +141,7 @@ Message ClientConnection::set_request_handler(Message &request) {
   // set popped value to requested key
   cur_table->set(request.get_key(), popped_val);
 
-  return Message(MessageType::OK);
+  response = Message(MessageType::OK);
 
 }
 
@@ -144,8 +153,6 @@ Message ClientConnection::add_request_handler(Message &request) {
 
   // add them together and push back onto stack
   client_stack.push(std::to_string(value_1 + value_2));
-  return Message(MessageType::OK);
-
 }
 
 Message ClientConnection::mul_request_handler(Message &request) {
@@ -156,9 +163,6 @@ Message ClientConnection::mul_request_handler(Message &request) {
 
   // multiply them together and push back onto stack
   client_stack.push(std::to_string(value_1 * value_2));
-
-  return Message(MessageType::OK);
-
 }
 
 Message ClientConnection::sub_request_handler(Message &request) {
@@ -168,9 +172,6 @@ Message ClientConnection::sub_request_handler(Message &request) {
 
   // subtract them together and push back onto stack
   client_stack.push(std::to_string(value_2 - value_1));
-
-  return Message(MessageType::OK);
-
 }
 
 Message ClientConnection::div_request_handler(Message &request) {
@@ -180,16 +181,22 @@ Message ClientConnection::div_request_handler(Message &request) {
 
   // divide them together and push back onto stack
   client_stack.push(std::to_string(value_2 / value_1));
-
-  return Message(MessageType::OK);
-
 }
 
 
 void ClientConnection::top_two_vals_stack(int64_t &val1, int64_t &val2) {
-  // NEED ERROR HANDLING FOR POPPING
-  val1 = std::stoi(client_stack.get_top());
-  client_stack.pop();
-  val2 = std::stoi(client_stack.get_top());
-  client_stack.pop();
+  try {
+    val1 = std::stoi(client_stack.get_top());
+    client_stack.pop();
+    val2 = std::stoi(client_stack.get_top());
+    client_stack.pop();
+  } catch (OperationException) {
+    response = Message(MessageType::ERROR, {"stack is empty or operands are not valid"});
+  }
+}
+
+void ClientConnection::return_response_to_client(Message &response) {
+  std::string encoded_response;
+  MessageSerialization::encode(response, encoded_response);
+  rio_writen(m_client_fd, encoded_response.c_str(), encoded_response.size());
 }

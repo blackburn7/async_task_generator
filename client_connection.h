@@ -16,6 +16,7 @@ private:
   rio_t m_fdbuf;     // client file descriptor buffer
   bool logged_in;    // client login status
   ValueStack client_stack;  // client stack
+  Message response;  // response message to be sent to client
   
   
   // copy constructor and assignment operator are prohibited
@@ -40,6 +41,7 @@ public:
 
   // extra helper functions
   void top_two_vals_stack(int64_t &val1, int64_t &val2); 
+  void return_response_to_client(Message &response);
   
 
   
