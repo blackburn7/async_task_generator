@@ -6,20 +6,21 @@
 #include "guard.h"
 #include "server.h"
 
-Server::Server(): ssock_fd(), keep_going(1) {
-  
+Server::Server(): ssock_fd(), keep_going(1), num_active_clients(0) {
+  pthread_mutex_init(&m_num_active_clients_mutex, nullptr);
 }
 
 Server::~Server()
 {
-  // TODO: implement
+  pthread_mutex_destroy(&m_num_active_clients_mutex);
+
 }
 
 void Server::listen( const std::string &port ) {
 
 
   ssock_fd = open_listenfd(port.c_str());
-  
+
   if (ssock_fd < 0) {
     // handle error
     log_error("Failed to open listen socket");
@@ -29,8 +30,8 @@ void Server::listen( const std::string &port ) {
 }
 
 void Server::server_loop() {
-  
-  while (1) {
+
+  while (keep_going) {
 
     // wait for client connection
     int client_fd = accept(ssock_fd, NULL, NULL);
@@ -47,6 +48,11 @@ void Server::server_loop() {
     if (pthread_create(&thr_id, nullptr, client_worker, client) != 0) {
         log_error("Could not create client thread");
         delete client;
+    } else {
+      // pthread_mutex_lock(&m_num_active_clients_mutex);
+      // num_active_clients++;
+      // pthread_mutex_unlock(&m_num_active_clients_mutex);
+
     }
 
   }
@@ -73,6 +79,15 @@ void *Server::client_worker( void *arg )
   
   // allow server to chat with client
   client->chat_with_client();
+
+  // pthread_mutex_lock(&(static_cast<Server*>(arg)->m_num_active_clients_mutex));
+  // static_cast<Server*>(arg)->num_active_clients--;
+  // if (static_cast<Server*>(arg)->num_active_clients == 0) {
+  //     static_cast<Server*>(arg)->keep_going = 0;
+  // }
+  // pthread_mutex_unlock(&(static_cast<Server*>(arg)->m_num_active_clients_mutex));
+
+
 
   // clean up resources
   return nullptr;

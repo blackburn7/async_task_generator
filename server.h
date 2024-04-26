@@ -13,6 +13,8 @@ private:
   int ssock_fd;
   int keep_going;
   std::map <std::string, Table*> server_tables; 
+  pthread_mutex_t m_num_active_clients_mutex;
+  int num_active_clients;
 
 
 
