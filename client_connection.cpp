@@ -94,7 +94,6 @@ void ClientConnection::chat_with_client() {
         default:
           throw InvalidMessage("Invalid message sent");
       }
-      return_response_to_client();
     } catch (const OperationException &e) {
       if (transaction_mode) {
         throw FailedTransaction("operation failed during transaction");
@@ -107,13 +106,12 @@ void ClientConnection::chat_with_client() {
       response = Message(MessageType::FAILED, {e.what()});
     } catch (const InvalidMessage &e) {
       response = Message(MessageType::ERROR, {e.what()});
-      return_response_to_client();
       keep_going = 0;
     } catch (const CommException &e) {
       response = Message(MessageType::ERROR, {e.what()});
-      return_response_to_client();
       keep_going = 0;
     }
+    return_response_to_client();
   }
 }
 
