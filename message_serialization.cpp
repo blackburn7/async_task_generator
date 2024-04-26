@@ -63,6 +63,7 @@ void MessageSerialization::decode( const std::string &encoded_msg_, Message &msg
   while (encoded_msg_.at(i) != ' ' && encoded_msg_.at(i) != '\n') {
     messageType += encoded_msg_.at(i);
     i++;
+    
   }
   // determines enum message type and maps to it
   msg.set_message_type(stringToMessageType(messageType));

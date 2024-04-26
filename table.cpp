@@ -12,6 +12,7 @@ mblackb8@jh.edu
 #include "table.h"
 #include "exceptions.h"
 #include "guard.h"
+#include <iostream>
 
 Table::Table(const std::string &name)
     : m_name(name)

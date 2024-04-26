@@ -41,8 +41,8 @@ void ClientConnection::chat_with_client() {
     // std::cout << "3" <<  std::endl;
     // convert buf to string and decode
     std::string encoded_message(buf);
+    // std::cout << encoded_message <<  std::endl;
     MessageSerialization::decode(encoded_message, request);
-    // std::cout << "4" <<  std::endl;
     if (!request.is_valid()) {
       response = Message(MessageType::ERROR, {"Error:invalid message sent"});
       return_response_to_client(response);
@@ -66,6 +66,7 @@ void ClientConnection::chat_with_client() {
         // create and lock table
         m_server->create_table(request.get_table());
         handle_table_locking(m_server->find_table(request.get_table()));
+        if (!transaction_mode) { m_server->find_table(request.get_table())->unlock(); }
         response = Message(MessageType::OK);
         break;
       case MessageType::PUSH:
@@ -73,12 +74,20 @@ void ClientConnection::chat_with_client() {
         response = Message(MessageType::OK);
         break;
       case MessageType::POP:
-        client_stack.pop();
-        response = Message(MessageType::OK);
+        if (client_stack.is_empty()) {
+          response = Message(MessageType::FAILED, {"stack is empty"});
+        } else {
+          client_stack.pop();
+          response = Message(MessageType::OK);
+        }
         break;
       case MessageType::TOP:
         // set response to data at top of stack
-        response = Message(MessageType::DATA, {client_stack.get_top()});
+        if (client_stack.is_empty()) {
+          response = Message(MessageType::FAILED, {"stack is empty"});
+        } else {
+          response = Message(MessageType::DATA, {client_stack.get_top()});
+        }
         break;
       case MessageType::SET:
         // Handle SET request
@@ -157,15 +166,22 @@ void ClientConnection::set_request_handler(Message &request) {
   // find requested table
   Table *cur_table = m_server->find_table(request.get_table());
 
+  // handle invalid table name
+  if (!cur_table) {
+    response = Message(MessageType::FAILED, {"Requested table not found"});
+    return;
+  }
+
   // handle locking for table
   handle_table_locking(cur_table);
- 
+
   // get value at top of stack
   std::string popped_val = client_stack.get_top();
   client_stack.pop();
 
   // set popped value to requested key
   cur_table->set(request.get_key(), popped_val);
+
 
   // unlock table if not currently in transaction
   if (!transaction_mode) { cur_table->unlock(); }
@@ -216,32 +232,32 @@ void ClientConnection::div_request_handler(Message &request) {
 Message ClientConnection::top_two_vals_stack(int64_t &val1, int64_t &val2) {
   std::string pop1; std::string pop2;
   try {
-    std::cout <<"TOP BEFORE: " << client_stack.get_top() << std::endl;
+    // std::cout <<"TOP BEFORE: " << client_stack.get_top() << std::endl;
     pop1 = client_stack.get_top();
     client_stack.pop();
-    std::cout <<"TOP: " << client_stack.get_top() << std::endl;
+    // std::cout <<"TOP: " << client_stack.get_top() << std::endl;
   } catch (const OperationException& e) {
-    std::cout << "HEY" << client_stack.is_empty() << std::endl;
+    // std::cout << "HEY" << client_stack.is_empty() << std::endl;
     return Message(MessageType::ERROR, {"stack is empty or operands are not valid"});
   }
 
   try {
-    std::cout << "1" <<std::endl;
+    // std::cout << "1" <<std::endl;
 
     pop2 = client_stack.get_top();
-    std::cout << "1" <<std::endl;
-    std::cout << "TP" << client_stack.get_top() << std::endl;
-    std::cout << client_stack.is_empty() << std::endl;
+    // std::cout << "1" <<std::endl;
+    // std::cout << "TP" << client_stack.get_top() << std::endl;
+    // std::cout << client_stack.is_empty() << std::endl;
 
     client_stack.pop();
-    std::cout << "1" <<std::endl;
-    std::cout << client_stack.is_empty() << std::endl;
+    // std::cout << "1" <<std::endl;
+    // std::cout << client_stack.is_empty() << std::endl;
 
   } catch (const OperationException& e) {
-        std::cout << "3" <<std::endl;
+        // std::cout << "3" <<std::endl;
 
     client_stack.push(pop1);
-        std::cout << "3" <<std::endl;
+        // std::cout << "3" <<std::endl;
 
     return Message(MessageType::ERROR, {"stack is empty or operands are not valid"});
   }
