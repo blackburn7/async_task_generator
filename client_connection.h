@@ -42,10 +42,12 @@ public:
 
 
   // extra helper functions
-  Message top_two_vals_stack(int64_t &val1, int64_t &val2); 
-  void return_response_to_client(Message &response);
-  bool table_is_locked(Table* table);
-  void handle_transaction_locking(Table *table);
+  Message top_two_vals_stack(int64_t &val1, int64_t &val2);  // pops and returns two values from the stack
+  void return_response_to_client(Message &response);         // outputs given response message back to the client
+  bool table_is_locked(Table* table);                        // determines if a given table is locked
+  void handle_table_locking(Table *table);                   // handles table locking for transactions and non-transactions
+  void rollback_tables();                                    // unlocks and rolls back all changes if a transaction fails
+  void commit_tables();                                      // unlcoks and commits all tables if a transaction succeeds
   
 
   

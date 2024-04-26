@@ -63,7 +63,9 @@ void ClientConnection::chat_with_client() {
 
     switch (request.get_message_type()) {
       case MessageType::CREATE:
+        // create and lock table
         m_server->create_table(request.get_table());
+        handle_table_locking(m_server->find_table(request.get_table()));
         response = Message(MessageType::OK);
         break;
       case MessageType::PUSH:
@@ -107,7 +109,9 @@ void ClientConnection::chat_with_client() {
         transaction_mode = true;
         break;
       case MessageType::COMMIT:
+        // if successful, exit transaction and unlock/commit tables
         response = Message(MessageType::OK);
+        commit_tables();
         transaction_mode = false;
         break;
       case MessageType::BYE:
@@ -133,19 +137,17 @@ void ClientConnection::get_request_handler(Message &request) {
   // find requested table
   Table *cur_table = m_server->find_table(request.get_table());
 
-
-  if (!transaction_mode) {
-    cur_table->lock();
-  } else {
-    handle_transaction_locking(cur_table);
-  }
-
-
+  // handle locking for table
+  handle_table_locking(cur_table);
+  
   // get value at table key
   std::string cur_val = cur_table->get(request.get_key());
 
   // push value onto operand stack
   client_stack.push(cur_val);
+
+  // unlock table if not currently in transaction
+  if (!transaction_mode) { cur_table->unlock(); }
 
   response = Message(MessageType::OK);
 }
@@ -154,6 +156,9 @@ void ClientConnection::set_request_handler(Message &request) {
 
   // find requested table
   Table *cur_table = m_server->find_table(request.get_table());
+
+  // handle locking for table
+  handle_table_locking(cur_table);
  
   // get value at top of stack
   std::string popped_val = client_stack.get_top();
@@ -161,6 +166,9 @@ void ClientConnection::set_request_handler(Message &request) {
 
   // set popped value to requested key
   cur_table->set(request.get_key(), popped_val);
+
+  // unlock table if not currently in transaction
+  if (!transaction_mode) { cur_table->unlock(); }
 
   response = Message(MessageType::OK);
 
@@ -250,9 +258,48 @@ void ClientConnection::return_response_to_client(Message &response) {
 }
 
 bool ClientConnection::table_is_locked(Table* table) {
-    return locked_tables.find(table) != locked_tables.end();
+  return locked_tables.find(table) != locked_tables.end();
 }
 
-void handle_transaction_locking(Table * table) {
+void ClientConnection::handle_table_locking(Table * table) {
   
+  // simply lock the table if not in transaction mode
+  if (!transaction_mode) {
+    table->lock();
+    return;
+  }
+
+  // exit if table already locked
+  if (table_is_locked(table)) {
+    return;
+  }
+
+  // try lock if table is not currently locked
+  if(!table->trylock()) {
+    // handle trylock failure
+    rollback_tables();
+    transaction_mode = false;
+    response = Message(MessageType::FAILED, {"trylock failed"});
+  } else {
+    // trylock success
+    locked_tables.insert(table);
+  }
+}
+
+void ClientConnection::rollback_tables() {
+  // unlock and rollback all tables from the transaction
+  for (Table* table: locked_tables) {
+    table->rollback_changes();
+    table->unlock();
+  }
+  locked_tables.clear();
+}
+
+void ClientConnection::commit_tables() {
+  // unlock and commit all tables from the transaction
+  for (Table* table: locked_tables) {
+    table->commit_changes();
+    table->unlock();
+  }
+  locked_tables.clear();
 }
