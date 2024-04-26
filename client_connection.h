@@ -32,18 +32,20 @@ public:
   void chat_with_client();
 
   // request command handlers
+  void create_request_handler(Message &request);
   void push_request_handler(Message &request);
-  void set_request_handler(Message &request);
+  void pop_request_handler(Message &request);
+  void top_request_handler(Message &request);
   void get_request_handler(Message &request);
-  void add_request_handler(Message &request);
-  void mul_request_handler(Message &request);
-  void sub_request_handler(Message &request);
-  void div_request_handler(Message &request);
+  void set_request_handler(Message &request);
+
+  template <typename ArithmeticOperation>
+  void arithmetic_request_handler(Message &request, ArithmeticOperation operation);
 
 
   // extra helper functions
-  Message top_two_vals_stack(int64_t &val1, int64_t &val2);  // pops and returns two values from the stack
-  void return_response_to_client(Message &response);         // outputs given response message back to the client
+  bool pop_two_values(int64_t &val1, int64_t &val2);  // pops and returns two values from the stack
+  void return_response_to_client();         // outputs given response message back to the client
   bool table_is_locked(Table* table);                        // determines if a given table is locked
   void handle_table_locking(Table *table);                   // handles table locking for transactions and non-transactions
   void rollback_tables();                                    // unlocks and rolls back all changes if a transaction fails

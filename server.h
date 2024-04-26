@@ -11,10 +11,9 @@ class Server {
 private:
   // member variables
   int ssock_fd;
-  int keep_going;
-  std::map <std::string, Table*> server_tables; 
-  pthread_mutex_t m_num_active_clients_mutex;
-  int num_active_clients;
+  std::map <std::string, Table*> *server_tables; 
+
+  pthread_mutex_t tables_mutex;
 
 
 
@@ -33,9 +32,6 @@ public:
 
   void log_error( const std::string &what );
 
-  void stop() {
-    keep_going = 0;
-  };
 
   void create_table( const std::string &name );
 

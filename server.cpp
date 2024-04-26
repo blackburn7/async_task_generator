@@ -6,14 +6,16 @@
 #include "guard.h"
 #include "server.h"
 
-Server::Server(): ssock_fd(), keep_going(1), num_active_clients(0) {
-  pthread_mutex_init(&m_num_active_clients_mutex, nullptr);
+Server::Server(): ssock_fd() {
+  server_tables = new std::map<std::string, Table*>();
+  if (pthread_mutex_init(&tables_mutex, nullptr) != 0) {
+    throw std::runtime_error("failed to initialize mutex");
+  }
 }
 
-Server::~Server()
-{
-  pthread_mutex_destroy(&m_num_active_clients_mutex);
-
+Server::~Server() {
+  pthread_mutex_destroy(&tables_mutex);
+  delete server_tables;
 }
 
 void Server::listen( const std::string &port ) {
@@ -31,7 +33,7 @@ void Server::listen( const std::string &port ) {
 
 void Server::server_loop() {
 
-  while (keep_going) {
+  while (1) {
 
     // wait for client connection
     int client_fd = accept(ssock_fd, NULL, NULL);
@@ -48,20 +50,16 @@ void Server::server_loop() {
     if (pthread_create(&thr_id, nullptr, client_worker, client) != 0) {
         log_error("Could not create client thread");
         delete client;
-    } else {
-      // pthread_mutex_lock(&m_num_active_clients_mutex);
-      // num_active_clients++;
-      // pthread_mutex_unlock(&m_num_active_clients_mutex);
-
     }
 
   }
 
   close(ssock_fd);
 
-  // Note that your code to start a worker thread for a newly-connected
-  // client might look something like this:
+
 }
+
+
 
 
 void *Server::client_worker( void *arg )
@@ -80,15 +78,6 @@ void *Server::client_worker( void *arg )
   // allow server to chat with client
   client->chat_with_client();
 
-  // pthread_mutex_lock(&(static_cast<Server*>(arg)->m_num_active_clients_mutex));
-  // static_cast<Server*>(arg)->num_active_clients--;
-  // if (static_cast<Server*>(arg)->num_active_clients == 0) {
-  //     static_cast<Server*>(arg)->keep_going = 0;
-  // }
-  // pthread_mutex_unlock(&(static_cast<Server*>(arg)->m_num_active_clients_mutex));
-
-
-
   // clean up resources
   return nullptr;
 }
@@ -101,14 +90,16 @@ void Server::log_error( const std::string &what )
 
 void Server::create_table(const std::string &name) {
   // add new server to map of servers
-  server_tables[name] = new Table(name);
+  pthread_mutex_lock(&tables_mutex);
+  (*server_tables)[name] = new Table(name);
+  pthread_mutex_unlock(&tables_mutex);
 }
 
 Table* Server::find_table(const std::string &name) {
-  auto it = server_tables.find(name);
-  if (it != server_tables.end()) {
-      return it->second;
-  }
-  return nullptr;
+  pthread_mutex_lock(&tables_mutex);
+  auto it = (*server_tables).find(name);
+  Table* table = (it != (*server_tables).end()) ? it->second: nullptr;
+  pthread_mutex_unlock(&tables_mutex);
+  return table;
 }
 
