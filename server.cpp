@@ -107,8 +107,12 @@ void Server::create_table(const std::string &name) {
 
 Table* Server::find_table(const std::string &name) {
   pthread_mutex_lock(&tables_mutex);
+
+  // determine if can be found
   auto it = (*server_tables).find(name);
+
   Table* table = (it != (*server_tables).end()) ? it->second: nullptr;
+  
   pthread_mutex_unlock(&tables_mutex);
   return table;
 }
