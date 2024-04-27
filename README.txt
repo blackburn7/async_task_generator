@@ -16,3 +16,10 @@ Matt: did message, get value, incr value
 Interesting elements: we noticed alot of the code/format for get value, set value, and to a lesser extent incr value
 could be copied over and reused as how each process would occur on the outskirts of their actual functionality were 
 very similar.
+
+MS2:
+
+Matthew/Atticus: did a lot of pair programming for client connection
+
+Matthew: much of the server code
+Atticus: error handling

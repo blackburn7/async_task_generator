@@ -46,8 +46,8 @@ void Server::server_loop() {
 
     // start worker thread for connected client
     ClientConnection *client = new ClientConnection(this, client_fd);
-    pthread_t thr_id;
-    if (pthread_create(&thr_id, nullptr, client_worker, client) != 0) {
+    pthread_t thresad;
+    if (pthread_create(&thresad, nullptr, client_worker, client) != 0) {
         log_error("Could not create client thread");
         delete client;
     }
