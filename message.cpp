@@ -179,7 +179,7 @@ bool Message::is_valid() const
     default:
       break;
   }  
-  return false;
+  return true;
 }
 
 // determines valid number of args dependent on message type

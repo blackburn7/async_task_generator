@@ -1,3 +1,13 @@
+/*
+Assignment 5
+
+Atticus Colwell
+acolwel2@jh.edu
+
+Matthew Blackburn
+mblackb8@jh.edu
+*/
+
 #include <iostream>
 #include <cassert>
 #include <memory>
