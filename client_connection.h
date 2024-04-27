@@ -11,13 +11,13 @@ class Table; // forward declaration
 
 class ClientConnection {
 private:
-  Server *m_server;  // server
-  int m_client_fd;   // client file descriptor
-  rio_t m_fdbuf;     // client file descriptor buffer
-  bool logged_in;    // client login status
-  ValueStack client_stack;  // client stack
-  Message response;  // response message to be sent to client
-  bool transaction_mode; // determines whether the client is in a transaction
+  Server *m_server;               // server
+  int m_client_fd;                // client file descriptor
+  rio_t m_fdbuf;                  // client file descriptor buffer
+  bool logged_in;                 // client login status
+  ValueStack client_stack;        // client stack
+  Message response;               // response message to be sent to client
+  bool transaction_mode;          // determines whether the client is in a transaction
   std::set<Table*> locked_tables; // map of currently locked tables
   
   

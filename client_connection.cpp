@@ -33,7 +33,7 @@ void ClientConnection::chat_with_client() {
       std::string encoded_message(buf);
       MessageSerialization::decode(encoded_message, request);
       if (!request.is_valid()) {
-        throw InvalidMessage("Invalid message sent");
+        throw InvalidMessage("\"Invalid arguments (number and/or format)\"");
       }
 
       // Handle login request

@@ -114,7 +114,7 @@ void MessageSerialization::decode( const std::string &encoded_msg_, Message &msg
   // confirm validity
   if (!msg.is_valid()) {
 
-    throw InvalidMessage("Message not valid");
+    throw InvalidMessage("\"Invalid arguments (number and/or format)\"");
   }
 }
 
